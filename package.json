@@ -53,6 +53,9 @@
     "build": "gulp build"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "xinshangshangxin",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
