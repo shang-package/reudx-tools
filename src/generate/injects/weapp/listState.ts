@@ -4,11 +4,9 @@ import { getNames } from './helper';
 export default ({
   stateName,
   comment,
-  initValue,
 }: {
   stateName: string;
   comment: string;
-  initValue: any;
 }): InjectReturn => {
   return {
     reg: /([\n\r]\s*state\s*:\s*{)([\r\n}])/,
@@ -17,7 +15,7 @@ export default ({
 
       return `${$1}
 ${comment}
-${o.list}:${JSON.stringify(initValue)},
+${o.list}: [],
 ${o.params}: {},
 ${o.pagination}: {},
 ${o.finished}: false,

@@ -10,6 +10,7 @@ import { InjectParams } from '../injects/types';
 import importCommonFunc from '../injects/weapp/importCommonFunc';
 import listEffects from '../injects/weapp/listEffects';
 import listState from '../injects/weapp/listState';
+import weappReducers from '../injects/weapp/weappReducers';
 
 const INJECT_MAPPING = {
   importService,
@@ -21,6 +22,7 @@ const INJECT_MAPPING = {
   weappImportCommonFunc: importCommonFunc,
   weappListEffects: listEffects,
   weappListState: listState,
+  weappReducers,
 };
 
 const { keyMapping: ModelInjectKey, keys } = mapping2keys(INJECT_MAPPING);

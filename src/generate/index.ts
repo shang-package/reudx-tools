@@ -218,7 +218,7 @@ async function generate({
       ModelInjectKey.weappImportCommonFunc,
       ModelInjectKey.weappListState,
       ModelInjectKey.weappListEffects,
-      ModelInjectKey.reducers
+      ModelInjectKey.weappReducers
     );
 
     serviceInjectKeys.push(ServiceInjectKey.weappRequest);
