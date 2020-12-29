@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redux Tool</title>
+
+    <link
+      href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <input
+          id="workSpace"
+          type="text"
+          class="form-control"
+          placeholder="输入 工作目录(WORK_SPACE)"
+        />
+      </div>
+      <div class="row" style="margin-top: 10px">
+        <div class="rol">
+          <select class="form-control" id="projectNames"></select>
+        </div>
+
+        <div class="rol">
+          <select class="form-control" id="projectModel"></select>
+        </div>
+
+        <div class="rol">
+          <select class="form-control" id="projectService"></select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px">
+        <div class="rol">
+          <select class="form-control" id="injectType">
+            <option value="full">完整</option>
+            <option value="request">仅仅请求, 不存储</option>
+          </select>
+        </div>
+
+        <div class="col">
+          <input
+            id="name"
+            type="text"
+            class="form-control"
+            placeholder="需要添加的state名字, 不能重复"
+          />
+        </div>
+        <div class="col">
+          <input
+            id="initValue"
+            type="text"
+            class="form-control"
+            placeholder="初始值"
+            value="{}"
+          />
+        </div>
+
+        <div class="col">
+          <input
+            id="comment"
+            type="text"
+            class="form-control"
+            placeholder="注释"
+          />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px">
+        <div class="col-2" style="padding-left: 0">
+          <input
+            id="effectPrefix"
+            type="text"
+            class="form-control"
+            value="fetch"
+            placeholder="effectPrefix"
+          />
+        </div>
+
+        <select class="col-2 form-control" id="requestMethod">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+
+        <div class="col-4">
+          <input
+            id="apiPath"
+            type="text"
+            class="form-control"
+            placeholder="apiPath"
+          />
+        </div>
+
+        <div class="col-4">
+          <div class="input-group" id="platform">
+            <label>
+              <input type="radio" value="admin" name="platform" />后台管理
+            </label>
+            <label>
+              <input type="radio" value="weappList" name="platform" />小程序列表
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="weapp"
+                name="platform"
+                disabled
+              />小程序
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button style="margin-top: 10px" id="generate" class="btn btn-primary">
+        生成
+      </button>
+
+      <div>
+        <pre id="display2"></pre>
+        <pre id="display1"></pre>
+      </div>
+    </div>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/js/bootstrap.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jsdiff/4.0.2/diff.min.js"></script>
+
+    <script>
+      const BACKEND_PREFIX = "https://__backend__.com";
+
+      let lastWorkSpace;
+      let lastProject;
+      let lastModel;
+
+      try {
+        ({ lastWorkSpace, lastProject, lastModel } = JSON.parse(
+          localStorage.getItem("last-val")
+        ));
+      } catch (e) {}
+
+      function saveLastVal() {
+        try {
+          localStorage.setItem(
+            "last-val",
+            JSON.stringify({
+              lastWorkSpace: $("#workSpace").val(),
+              lastProject: $("#projectNames").children("option:selected").val(),
+              lastModel: $("#projectModel").children("option:selected").val(),
+            })
+          );
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      const request = (() => {
+        return async (url, params) => {
+          let obj = {};
+          if (typeof url === "string") {
+            obj = {
+              url,
+              ...params,
+            };
+          } else {
+            obj = {
+              ...url,
+              ...params,
+            };
+          }
+
+          const init = {
+            ...obj,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              ...obj.headers,
+            },
+          };
+
+          if (obj.body) {
+            init.body = JSON.stringify(obj.body);
+          }
+
+          const u = new URL(`${BACKEND_PREFIX}/${encodeURIComponent(obj.url)}`);
+          Object.keys(obj.qs || {}).forEach((key) =>
+            u.searchParams.append(key, obj.qs[key])
+          );
+
+          const res = await fetch(u, init);
+          const json = await res.json();
+          return json;
+        };
+      })();
+
+      async function queryProjects() {
+        return request("listProject");
+      }
+
+      async function getProjectInfo(projectName) {
+        return request("listProjectInfo", { qs: { projectName } });
+      }
+
+      async function renderProjectNames() {
+        const projects = await queryProjects();
+
+        $("#projectNames").html(
+          projects.map((name) => {
+            return `<option value='${name}'>${name}</option>`;
+          })
+        );
+
+        $(`#projectNames option:contains('${lastProject}')`).attr(
+          "selected",
+          true
+        );
+        $("#projectNames").trigger("change");
+      }
+
+      async function renderProjectInfo(projectName) {
+        try {
+          const { models, services } = await getProjectInfo(projectName);
+
+          $("#projectModel").html(
+            models.map((name) => {
+              return `<option value='${name}'>${name}</option>`;
+            })
+          );
+
+          $("#projectService").html(
+            services.map((name) => {
+              return `<option value='${name}'>${name}</option>`;
+            })
+          );
+
+          $(`#projectModel option:contains('${lastModel}')`).attr(
+            "selected",
+            true
+          );
+          $("#projectModel").trigger("change");
+        } catch (e) {
+          $("#projectModel").html("");
+
+          $("#projectService").html("");
+        }
+      }
+
+      async function generate(isWrite = false) {
+        const projectName = $("#projectNames")
+          .children("option:selected")
+          .val();
+        const modelName = $("#projectModel").children("option:selected").val();
+        const serviceName = $("#projectService")
+          .children("option:selected")
+          .val();
+
+        const injectType = $("#injectType").children("option:selected").val();
+
+        const name = $("#name").val();
+        const initValue = $("#initValue").val();
+        const effectPrefix = $("#effectPrefix").val();
+        const comment = $("#comment").val();
+        const apiPath = $("#apiPath").val();
+        const requestMethod = $("#requestMethod").val();
+        const platform = $("#platform input:radio:checked").val();
+
+        const content = await request("generate", {
+          method: "POST",
+          body: {
+            projectName,
+            modelName,
+            serviceName,
+            stateName: name,
+            initValue,
+            effectPrefix,
+            comment,
+            apiPath,
+            injectType,
+            requestMethod,
+            isWrite,
+            platform,
+          },
+        });
+
+        if (isWrite) {
+          alert(JSON.stringify(content));
+        }
+
+        return content;
+      }
+
+      $("#projectNames").on("change", (e) => {
+        renderProjectInfo($("#projectNames").children("option:selected").val());
+
+        saveLastVal();
+      });
+
+      $("#projectModel").on("change", (e) => {
+        const v = $("#projectModel").children("option:selected").val();
+        $(`#projectService option:contains('${v}')`).attr("selected", true);
+
+        saveLastVal();
+      });
+
+      $("#generate").on("click", () => {
+        generate(true);
+      });
+
+      $("#workSpace").on("change", async (e) => {
+        await request("changeWorkSpace", {
+          qs: { dir: $("#workSpace").val() },
+        });
+        renderProjectNames();
+
+        saveLastVal();
+      });
+
+      function renderDiff(diff) {
+        let skipGap = 5;
+        let result = [];
+
+        diff.forEach((part) => {
+          if (part.added || part.removed) {
+            result.push(part);
+          } else if (part.count > skipGap * 2) {
+            const list = part.value.split(/[\r\n]/);
+
+            result.push({
+              ...part,
+              value: list.slice(0, skipGap).join("\n"),
+            });
+
+            result.push({
+              ...part,
+              value: `\n@@ skip ${part.count - skipGap * 2} lines @@\n\n`,
+              skipped: true,
+            });
+
+            result.push({
+              ...part,
+              value: list.slice(part.count - skipGap).join("\n"),
+            });
+          } else {
+            result.push(part);
+          }
+        });
+
+        const fragment = document.createDocumentFragment();
+        result.forEach((part) => {
+          const color = part.added
+            ? "rgb(227,250,234)"
+            : part.removed
+            ? "rgb(249,232,235)"
+            : part.skipped
+            ? "#ccc"
+            : "transparent";
+          span = document.createElement(part.skipped ? "span" : "div");
+
+          if (part.skipped) {
+            span.style.color = color;
+          } else {
+            span.style.background = color;
+          }
+          span.appendChild(document.createTextNode(part.value));
+          fragment.appendChild(span);
+        });
+
+        return fragment;
+      }
+
+      $(
+        "#workSpace, #projectNames, #projectModel, #projectService, #injectType, #name, #initValue, #comment, #effectPrefix, #requestMethod, #apiPath, [name='platform']"
+      ).on("change", async () => {
+        const content = await generate(false);
+
+        if (content && content.type === "error") {
+          $("#display2").html("<h1 style='color: red'>出错啦~</h1>");
+          $("#display1").html(
+            JSON.stringify(
+              {
+                ...content,
+                stack: (content.stack || "").split(/[\r\n]/).join("<br>"),
+              },
+              null,
+              2
+            )
+          );
+          return;
+        }
+
+        const [f1, f2] = content;
+
+        // 忽略 换行符差异
+        const lineWrap = (f1.output.match(/\r\n|\r|\n/) ?? ["\n"])[0];
+
+        const diff1 = Diff.diffLines(
+          f1.input.replace(/\r\n|\r|\n/g, lineWrap),
+          f1.output,
+          {
+            newlineIsToken: true,
+          }
+        );
+        const diff2 = Diff.diffLines(
+          f2.input.replace(/\r\n|\r|\n/g, lineWrap),
+          f2.output,
+          {
+            newlineIsToken: true,
+          }
+        );
+
+        $("#display1").html();
+        $("#display1").html(
+          `<h3 style="color: #9400D3">${(
+            f1.modelPath || f1.servicePath
+          ).replace($("#workSpace").val(), "")}</h3>`
+        );
+        $("#display1").append(renderDiff(diff1));
+
+        $("#display2").html();
+        $("#display2").html(
+          `<h3 style="color: #9400D3">${(
+            f2.modelPath || f2.servicePath
+          ).replace($("#workSpace").val(), "")}</h3>`
+        );
+        $("#display2").append(renderDiff(diff2));
+      });
+
+      $(function () {
+        if (lastWorkSpace) {
+          $("#workSpace").val(lastWorkSpace);
+          $("#workSpace").trigger("change");
+        }
+      });
+    </script>
+  </body>
+</html>
