@@ -99,24 +99,6 @@
         </div>
       </div>
 
-      <div class="row" style="margin-top: 10px">
-        <div class="col">
-          <div class="input-group" id="platform">
-            <label>
-              <input type="radio" value="admin" name="platform" />后台管理
-            </label>
-            <label>
-              <input type="radio" value="weappList" name="platform" />小程序列表
-            </label>
-            <label>
-              <input type="radio" value="weapp" name="platform" />小程序
-            </label>
-          </div>
-        </div>
-
-       
-      </div>
-
       <button style="margin-top: 10px" id="generate" class="btn btn-primary">
         生成
       </button>
@@ -267,7 +249,6 @@
         const comment = $("#comment").val();
         const apiPath = $("#apiPath").val();
         const requestMethod = $("#requestMethod").val();
-        const platform = $("#platform input:radio:checked").val();
 
         const content = await request("generate", {
           method: "POST",
@@ -283,7 +264,6 @@
             injectType,
             requestMethod,
             isWrite,
-            platform,
           },
         });
 
@@ -374,7 +354,7 @@
       }
 
       $(
-        "#workSpace, #projectNames, #projectModel, #projectService, #injectType, #name, #initValue, #comment, #effectPrefix, #requestMethod, #apiPath, [name='platform']"
+        "#workSpace, #projectNames, #projectModel, #projectService, #injectType, #name, #initValue, #comment, #effectPrefix, #requestMethod, #apiPath"
       ).on("change", async () => {
         const content = await generate(false);
 

@@ -21,6 +21,22 @@ import {
 } from './services/add';
 import { checkService } from './services/check';
 
+async function getPlatform(projectDir: string, stateName: string) {
+  const projectConfigJsonPath = pathResolve(projectDir, 'project.config.json');
+
+  const isExists = await pathExists(projectConfigJsonPath);
+
+  if (!isExists) {
+    return Platform.admin;
+  }
+
+  if (/List$/.test(stateName)) {
+    return Platform.weappList;
+  }
+
+  return Platform.weapp;
+}
+
 export async function getPrettierConfig(
   projectDir: string
 ): Promise<Record<string, unknown>> {
@@ -47,7 +63,6 @@ export async function check({
   comment,
   initValue,
   isWrite,
-  platform,
 }: {
   projectDir: string;
   modelName: string;
@@ -61,16 +76,9 @@ export async function check({
   comment: string;
   initValue: Record<string, unknown> | string;
   isWrite?: boolean;
-  platform: Platform;
 }): Promise<InjectParams> {
   const modelPath = pathResolve(projectDir, 'src/models', `${modelName}.js`);
   const isModelExists = await pathExists(modelPath);
-
-  // TODO: 通过 project.config.json 和 stateName 自动处理
-  if (!platform) {
-    console.warn(`未找到使用平台 ${platform}`);
-    throw new Errors.InjectNoPlatform({ platform });
-  }
 
   if (!isModelExists) {
     console.warn(`未找到 Model ${modelName}`, modelPath);
@@ -161,7 +169,6 @@ async function generate({
   injectType,
   requestMethod,
   isWrite,
-  platform,
 }: {
   projectDir: string;
   modelName: string;
@@ -173,7 +180,6 @@ async function generate({
   apiPath: string;
   injectType: InjectType;
   requestMethod: string;
-  platform: Platform;
   isWrite?: boolean;
 }): Promise<[ModelResult, ServiceResult] | { message: string }> {
   const params = await check({
@@ -189,12 +195,12 @@ async function generate({
     comment,
     initValue,
     isWrite,
-
-    platform,
   });
 
   const modelInjectKeys = [] as ModelInjectType;
   const serviceInjectKeys = [] as ServiceInjectType;
+
+  const platform = await getPlatform(projectDir, stateName);
 
   if (platform === Platform.admin) {
     serviceInjectKeys.push(ServiceInjectKey.adminRequest);
