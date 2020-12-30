@@ -18,7 +18,8 @@ export default ({
   const result = `${input}
 ${comment}
 export async function ${serverName}(data) {
-  return request(\`${apiPath}\`, {
+  return request({
+    url: \`${apiPath}\`,
     method: "${requestMethod}",
     data,
   });

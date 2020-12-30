@@ -1,7 +1,8 @@
+import { writeFile } from 'fs-extra';
 import mapping2keys from '../../common/mapping2keys';
-import adminRequest from '../injects/admin/adminRequest';
+import adminRequest from '../injects/admin/request';
 import { InjectParams } from '../injects/types';
-import weappRequest from '../injects/weapp/weappRequest';
+import weappRequest from '../injects/weapp/request';
 
 const SERVICE_INJECT_MAPPING = {
   adminRequest,
@@ -25,6 +26,7 @@ async function add2Service({
   serviceContent,
   originServiceContent,
   servicePath,
+  isWrite,
   ...params
 }: InjectParams & { injectKeys: ServiceInjectType }): Promise<ServiceResult> {
   const output = injectKeys.reduce((result, key) => {
@@ -36,6 +38,10 @@ async function add2Service({
 
     return result;
   }, serviceContent);
+
+  if (isWrite) {
+    await writeFile(servicePath, output);
+  }
 
   return {
     servicePath,

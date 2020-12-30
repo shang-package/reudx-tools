@@ -1,25 +1,29 @@
 import { writeFile } from 'fs-extra';
 import { format as prettierFormat } from 'prettier';
 import mapping2keys from '../../common/mapping2keys';
-import effects from '../injects/admin/effects';
-import effectsWithNoReducers from '../injects/admin/effectsWithNoReducers';
-import state from '../injects/admin/state';
+import adminEffects from '../injects/admin/effects';
+import adminEffectsWithNoReducers from '../injects/admin/effectsWithNoReducers';
 import importService from '../injects/common/importService';
 import reducers from '../injects/common/reducers';
+import state from '../injects/common/state';
 import { InjectParams } from '../injects/types';
+import weappEffects from '../injects/weapp/effects';
+import weappEffectsWithNoReducers from '../injects/weapp/effectsWithNoReducers';
 import importCommonFunc from '../injects/weapp/importCommonFunc';
 import listEffects from '../injects/weapp/listEffects';
 import listState from '../injects/weapp/listState';
-import weappReducers from '../injects/weapp/weappReducers';
+import weappReducers from '../injects/weapp/listReducers';
 
 const INJECT_MAPPING = {
   importService,
   reducers,
-  adminEffects: effects,
-  adminEffectsWithNoReducers: effectsWithNoReducers,
-  adminState: state,
+  adminEffects,
+  adminEffectsWithNoReducers,
+  state,
 
   weappImportCommonFunc: importCommonFunc,
+  weappEffects,
+  weappEffectsWithNoReducers,
   weappListEffects: listEffects,
   weappListState: listState,
   weappReducers,

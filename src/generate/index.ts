@@ -197,6 +197,8 @@ async function generate({
   const serviceInjectKeys = [] as ServiceInjectType;
 
   if (platform === Platform.admin) {
+    serviceInjectKeys.push(ServiceInjectKey.adminRequest);
+
     if (injectType === InjectType.request) {
       modelInjectKeys.push(
         ModelInjectKey.importService,
@@ -205,14 +207,14 @@ async function generate({
     } else {
       modelInjectKeys.push(
         ModelInjectKey.importService,
-        ModelInjectKey.adminState,
+        ModelInjectKey.state,
         ModelInjectKey.adminEffects,
         ModelInjectKey.reducers
       );
     }
-
-    serviceInjectKeys.push(ServiceInjectKey.adminRequest);
   } else if (platform === Platform.weappList) {
+    serviceInjectKeys.push(ServiceInjectKey.weappRequest);
+
     modelInjectKeys.push(
       ModelInjectKey.importService,
       ModelInjectKey.weappImportCommonFunc,
@@ -220,8 +222,19 @@ async function generate({
       ModelInjectKey.weappListEffects,
       ModelInjectKey.weappReducers
     );
-
+  } else if (platform === Platform.weapp) {
     serviceInjectKeys.push(ServiceInjectKey.weappRequest);
+    modelInjectKeys.push(ModelInjectKey.importService);
+
+    if (injectType === InjectType.request) {
+      modelInjectKeys.push(ModelInjectKey.weappEffectsWithNoReducers);
+    } else {
+      modelInjectKeys.push(
+        ModelInjectKey.state,
+        ModelInjectKey.weappEffects,
+        ModelInjectKey.reducers
+      );
+    }
   }
 
   const result = await Promise.all([
