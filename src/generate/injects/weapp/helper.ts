@@ -12,9 +12,9 @@ function getNames(
 
   return {
     list: camelCase(`${k} List`),
-    params: camelCase(`${k} Params`),
-    pagination: camelCase(`${k} Pagination`),
-    finished: camelCase(`${k} Finished`),
+    params: camelCase(`${k} ListParams`),
+    pagination: camelCase(`${k} ListPagination`),
+    finished: camelCase(`${k} ListFinished`),
   };
 }
 
