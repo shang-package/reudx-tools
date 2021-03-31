@@ -47,7 +47,7 @@ if (payload.page != 1) {
   dataList = [...list];
 }
 let isFinished = false;
-if (dataList.length >= pagination.totalCount) {
+if (list.length < payload.pageSize) {
   isFinished = true;
 }
 yield put({
