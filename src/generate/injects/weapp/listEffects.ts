@@ -28,6 +28,16 @@ if (isAlreadyFinished) {
   return;
 }
 
+if (payload.page === 1) {
+  yield put({
+    type: '${camelCase(`set ${o.list}`)}',
+    payload: {
+      ${o.list}: [],
+      ${o.finished}: false,
+    },
+  });
+}
+
 const res = yield call(${serverName}, payload);
 if (res.code !== "1") {
   Taro.showToast({
