@@ -20,6 +20,7 @@ export interface InjectParams {
   modelPath: string;
   modelName: string;
   modelContent: string;
+  modelFileLanguage: string;
   originModelContent: string;
   serverName: string;
 
@@ -28,6 +29,7 @@ export interface InjectParams {
   servicePath: string;
   serviceName: string;
   serviceContent: string;
+  serviceFileLanguage: string;
   originServiceContent: string;
   comment: string;
   stateName: string;

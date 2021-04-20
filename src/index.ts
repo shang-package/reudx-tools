@@ -62,10 +62,10 @@ class Backend {
 
     return {
       models: models.map((item) => {
-        return item.replace(/\.js$/, '');
+        return item.replace(/\.(j|t)s$/, '');
       }),
       services: services.map((item) => {
-        return item.replace(/\.js$/, '');
+        return item.replace(/\.(j|t)s$/, '');
       }),
     };
   }

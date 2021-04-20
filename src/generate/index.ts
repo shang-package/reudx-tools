@@ -77,23 +77,48 @@ export async function check({
   initValue: Record<string, unknown> | string;
   isWrite?: boolean;
 }): Promise<InjectParams> {
-  const modelPath = pathResolve(projectDir, 'src/models', `${modelName}.js`);
-  const isModelExists = await pathExists(modelPath);
+  let modelFileLanguage = 'js';
+  let serviceFileLanguage = 'ts';
 
-  if (!isModelExists) {
-    console.warn(`未找到 Model ${modelName}`, modelPath);
-    throw new Errors.InjectNoModelName({ modelName, modelPath });
+  const modelPathList = [
+    pathResolve(projectDir, 'src/models', `${modelName}.js`),
+    pathResolve(projectDir, 'src/models', `${modelName}.ts`),
+  ];
+
+  const [m1, m2] = await Promise.all(
+    modelPathList.map((v) => {
+      return pathExists(v);
+    })
+  );
+
+  let modelPath;
+
+  if (!m1 && !m2) {
+    console.warn(`未找到 Model ${modelName}`, modelPathList.join('\n'));
+    throw new Errors.InjectNoModelName({ modelName, modelPath: modelPathList });
+  } else {
+    modelPath = m1 ? modelPathList[0] : modelPathList[1];
+    modelFileLanguage = m1 ? 'js' : 'ts';
   }
 
-  const servicePath = pathResolve(
-    projectDir,
-    'src/services',
-    `${serviceName}.js`
-  );
-  const isServiceExists = await pathExists(modelPath);
+  const servicePathList = [
+    pathResolve(projectDir, 'src/services', `${serviceName}.js`),
+    pathResolve(projectDir, 'src/services', `${serviceName}.ts`),
+  ];
 
-  if (!isServiceExists) {
-    throw new Errors.InjectNoServiceName({ servicePath, serviceName });
+  const [s1, s2] = await Promise.all(
+    servicePathList.map((v) => {
+      return pathExists(v);
+    })
+  );
+
+  let servicePath;
+  if (!s1 && !s2) {
+    console.warn(`未找到 Service ${modelName}`, servicePathList.join('\n'));
+    throw new Errors.InjectNoServiceName({ name: modelName, serviceName });
+  } else {
+    servicePath = s1 ? servicePathList[0] : servicePathList[1];
+    serviceFileLanguage = s1 ? 'js' : 'ts';
   }
 
   let injectKey: string;
@@ -106,7 +131,7 @@ export async function check({
   const prettierrc = await getPrettierConfig(projectDir);
   const originModelContent = await readFile(modelPath, { encoding: 'utf8' });
   const modelContent = prettierFormat(originModelContent, {
-    parser: 'babel',
+    parser: modelFileLanguage === 'js' ? 'babel' : 'babel-ts',
     endOfLine: 'auto',
   });
   checkModel({ modelContent, injectType, effectPrefix, stateName, injectKey });
@@ -115,7 +140,7 @@ export async function check({
     encoding: 'utf8',
   });
   const serviceContent = prettierFormat(originServiceContent, {
-    parser: 'babel',
+    parser: modelFileLanguage === 'js' ? 'babel' : 'babel-ts',
     endOfLine: 'auto',
   });
   checkService({
@@ -133,6 +158,7 @@ export async function check({
     modelPath,
     modelName,
     modelContent,
+    modelFileLanguage,
     originModelContent,
     serverName,
 
@@ -141,6 +167,7 @@ export async function check({
     servicePath,
     serviceName,
     serviceContent,
+    serviceFileLanguage,
     originServiceContent,
     comment,
     stateName,

@@ -56,7 +56,10 @@ async function add2Model({
     return r.replace(item.reg, item.replace);
   }, modelContent);
 
-  const output = prettierFormat(result, prettierrc);
+  const output = prettierFormat(result, {
+    ...prettierrc,
+    parser: params.modelFileLanguage === 'js' ? 'babel' : 'babel-ts',
+  });
 
   if (isWrite) {
     await writeFile(modelPath, output);
