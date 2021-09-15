@@ -78,7 +78,6 @@ class Backend {
       'modelName',
       'serviceName',
       'stateName',
-      'initValue',
       'effectPrefix',
       'comment',
       'apiPath',
@@ -102,7 +101,7 @@ class Backend {
 
     const projectDir = resolve(this.WORK_SPACE, projectName);
 
-    let init = initValue;
+    let init: Record<string, unknown> | string | undefined = initValue;
 
     try {
       if (typeof initValue === 'string') {
@@ -112,10 +111,14 @@ class Backend {
       init = initValue;
     }
 
+    if (init === 'undefined' || init === '') {
+      init = undefined;
+    }
+
     return generate({
       ...data,
       projectDir,
-      initValue: init as Record<string, unknown> | string,
+      initValue: init,
       injectType: data.injectType as InjectType,
     });
   }
@@ -195,7 +198,7 @@ async function handleBackendRequest(page: Page, backend: Backend) {
       if (e instanceof OperationalError) {
         resBody = e.toJSON();
       } else {
-        resBody = new Errors.Unknown({ ...data }).toJSON();
+        resBody = new Errors.Unknown({ ...data, ...e }, e.message).toJSON();
       }
 
       resStatus = 400;

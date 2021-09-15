@@ -74,7 +74,7 @@ export async function check({
   requestMethod: string;
   apiPath: string;
   comment: string;
-  initValue: Record<string, unknown> | string;
+  initValue?: Record<string, unknown> | string;
   isWrite?: boolean;
 }): Promise<InjectParams> {
   let modelFileLanguage = 'js';
@@ -201,7 +201,7 @@ async function generate({
   modelName: string;
   serviceName: string;
   stateName: string;
-  initValue: Record<string, unknown> | string;
+  initValue?: Record<string, unknown> | string;
   effectPrefix: string;
   comment: string;
   apiPath: string;
