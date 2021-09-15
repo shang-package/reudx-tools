@@ -1,7 +1,10 @@
+import { readJSON, writeJSON } from 'fs-extra';
 import { resolve } from 'path';
 import puppeteer, { Browser } from 'puppeteer-core';
 import { Errors } from '../../common/error';
 import { findChrome } from './findChrome';
+
+const USER_DATA_DIR = resolve(__dirname, '../../../.local-data/profile');
 
 let globalBrowser: Promise<Browser> | undefined;
 async function getBrowser(): Promise<puppeteer.Browser> {
@@ -24,7 +27,7 @@ async function getBrowser(): Promise<puppeteer.Browser> {
       headless: false,
       defaultViewport: null,
       pipe: true,
-      userDataDir: resolve(__dirname, '../../../.local-data/profile'),
+      userDataDir: USER_DATA_DIR,
     });
   }
 
@@ -54,4 +57,16 @@ async function clean(): Promise<{
   };
 }
 
-export { getEndpoint, clean, getBrowser };
+async function fixCrash(): Promise<void> {
+  const p = resolve(USER_DATA_DIR, 'Default/Preferences');
+
+  const obj = await readJSON(p);
+
+  if (obj?.profile?.exit_type) {
+    obj.profile.exit_type = 'Normal';
+
+    await writeJSON(p, obj);
+  }
+}
+
+export { getEndpoint, clean, getBrowser, USER_DATA_DIR, fixCrash };

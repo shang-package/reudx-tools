@@ -5,6 +5,7 @@ import { Errors, OperationalError } from './common/error';
 import generate from './generate';
 import { InjectType, Platform } from './generate/injects/types';
 import { launch } from './ui';
+import { fixCrash } from './ui/puppeteer/global-browser';
 
 const BACKEND_HOST = '__backend__.com';
 
@@ -220,6 +221,7 @@ async function handleBackendRequest(page: Page, backend: Backend) {
 }
 
 (async () => {
+  await fixCrash().catch(console.warn);
   const page = await launch();
   await handleBackendRequest(page, new Backend());
   await page.goto(`file://${resolve(__dirname, '../client/index.html')}`);
