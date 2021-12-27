@@ -21,11 +21,6 @@ ${comment}
 
   const res = yield call(${serverName}, payload);
   if (res.code !== "1") {
-    Taro.showToast({
-      title: res.message,
-      duration: 1000,
-      icon: 'none',
-    });
     return Promise.reject(); 
   }
 
