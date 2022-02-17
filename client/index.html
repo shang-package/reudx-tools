@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="google" content="notranslate">
+    <meta name="google" content="notranslate" />
     <title>Redux Tool</title>
 
     <link
-      href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
   </head>
@@ -108,10 +108,10 @@
         <pre id="display1"></pre>
       </div>
     </div>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/js/bootstrap.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/jsdiff/4.0.2/diff.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@4.0.2/dist/diff.min.js"></script>
 
     <script>
       const BACKEND_PREFIX = "https://__backend__.com";
@@ -385,13 +385,16 @@
             newlineIsToken: true,
           }
         );
-        const diff2 = Diff.diffLines(
-          f2.input.replace(/\r\n|\r|\n/g, lineWrap),
-          f2.output,
-          {
-            newlineIsToken: true,
-          }
-        );
+
+        if (f2) {
+          const diff2 = Diff.diffLines(
+            f2.input.replace(/\r\n|\r|\n/g, lineWrap),
+            f2.output,
+            {
+              newlineIsToken: true,
+            }
+          );
+        }
 
         $("#display1").html();
         $("#display1").html(

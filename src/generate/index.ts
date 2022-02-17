@@ -63,6 +63,7 @@ export async function check({
   comment,
   initValue,
   isWrite,
+  isOpenApi,
 }: {
   projectDir: string;
   modelName: string;
@@ -76,6 +77,7 @@ export async function check({
   comment: string;
   initValue?: Record<string, unknown> | string;
   isWrite?: boolean;
+  isOpenApi?: boolean;
 }): Promise<InjectParams> {
   let modelFileLanguage = 'js';
   let serviceFileLanguage = 'ts';
@@ -101,26 +103,6 @@ export async function check({
     modelFileLanguage = m1 ? 'js' : 'ts';
   }
 
-  const servicePathList = [
-    pathResolve(projectDir, 'src/services', `${serviceName}.js`),
-    pathResolve(projectDir, 'src/services', `${serviceName}.ts`),
-  ];
-
-  const [s1, s2] = await Promise.all(
-    servicePathList.map((v) => {
-      return pathExists(v);
-    })
-  );
-
-  let servicePath;
-  if (!s1 && !s2) {
-    console.warn(`未找到 Service ${modelName}`, servicePathList.join('\n'));
-    throw new Errors.InjectNoServiceName({ name: modelName, serviceName });
-  } else {
-    servicePath = s1 ? servicePathList[0] : servicePathList[1];
-    serviceFileLanguage = s1 ? 'js' : 'ts';
-  }
-
   let injectKey: string;
   if (injectType === InjectType.request) {
     injectKey = camelCase(`${effectPrefix} ${stateName}`);
@@ -136,22 +118,53 @@ export async function check({
   });
   checkModel({ modelContent, injectType, effectPrefix, stateName, injectKey });
 
-  const originServiceContent = await readFile(servicePath, {
-    encoding: 'utf8',
-  });
-  const serviceContent = prettierFormat(originServiceContent, {
-    parser: modelFileLanguage === 'js' ? 'babel' : 'babel-ts',
-    endOfLine: 'auto',
-  });
-  checkService({
-    serviceContent,
-    injectType,
-    effectPrefix,
-    stateName,
-    injectKey,
-  });
+  let servicePath = '';
+  let originServiceContent = '';
+  let serviceContent = '';
 
-  const serverName = camelCase(`${injectKey} server`);
+  if (!isOpenApi) {
+    const servicePathList = [
+      pathResolve(projectDir, 'src/services', `${serviceName}.js`),
+      pathResolve(projectDir, 'src/services', `${serviceName}.ts`),
+    ];
+
+    const [s1, s2] = await Promise.all(
+      servicePathList.map((v) => {
+        return pathExists(v);
+      })
+    );
+
+    if (!s1 && !s2) {
+      console.warn(`未找到 Service ${modelName}`, servicePathList.join('\n'));
+      throw new Errors.InjectNoServiceName({ name: modelName, serviceName });
+    } else {
+      servicePath = s1 ? servicePathList[0] : servicePathList[1];
+      serviceFileLanguage = s1 ? 'js' : 'ts';
+    }
+
+    originServiceContent = await readFile(servicePath, {
+      encoding: 'utf8',
+    });
+    serviceContent = prettierFormat(originServiceContent, {
+      parser: modelFileLanguage === 'js' ? 'babel' : 'babel-ts',
+      endOfLine: 'auto',
+    });
+
+    checkService({
+      serviceContent,
+      injectType,
+      effectPrefix,
+      stateName,
+      injectKey,
+    });
+  }
+
+  let serverName = camelCase(`${injectKey} server`);
+
+  if (isOpenApi) {
+    serverName = apiPath;
+  }
+
   const effectName = camelCase(`${effectPrefix} ${stateName}`);
 
   return {
@@ -208,7 +221,9 @@ async function generate({
   injectType: InjectType;
   requestMethod: string;
   isWrite?: boolean;
-}): Promise<[ModelResult, ServiceResult] | { message: string }> {
+}): Promise<[ModelResult, ServiceResult | null] | { message: string }> {
+  const isOpenApi = !/\//.test(apiPath);
+
   const params = await check({
     projectDir,
     modelName,
@@ -222,6 +237,7 @@ async function generate({
     comment,
     initValue,
     isWrite,
+    isOpenApi,
   });
 
   const modelInjectKeys = [] as ModelInjectType;
@@ -276,10 +292,12 @@ async function generate({
       injectKeys: modelInjectKeys,
     }),
 
-    add2Service({
-      ...params,
-      injectKeys: serviceInjectKeys,
-    }),
+    isOpenApi
+      ? null
+      : add2Service({
+          ...params,
+          injectKeys: serviceInjectKeys,
+        }),
   ]);
 
   if (isWrite) {
