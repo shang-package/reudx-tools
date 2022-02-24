@@ -28,6 +28,10 @@ async function getBrowser(): Promise<puppeteer.Browser> {
       defaultViewport: null,
       pipe: true,
       userDataDir: USER_DATA_DIR,
+      ignoreDefaultArgs: [
+        '--enable-automation',
+        '--enable-blink-features=IdleDetection',
+      ],
     });
   }
 

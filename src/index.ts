@@ -1,11 +1,10 @@
 import { pathExists, readdir, stat } from 'fs-extra';
 import { resolve } from 'path';
-import { Page, Request } from 'puppeteer-core';
+import { Page, HTTPRequest } from 'puppeteer-core';
 import { Errors, OperationalError } from './common/error';
 import generate from './generate';
 import { InjectType, Platform } from './generate/injects/types';
 import { launch } from './ui';
-import { fixCrash } from './ui/puppeteer/global-browser';
 
 const BACKEND_HOST = '__backend__.com';
 
@@ -125,7 +124,7 @@ class Backend {
   }
 }
 
-function parseBackend(req: Request) {
+function parseBackend(req: HTTPRequest) {
   const url = new URL(req.url());
 
   if (url.host !== BACKEND_HOST) {
@@ -195,7 +194,7 @@ async function handleBackendRequest(page: Page, backend: Backend) {
         resBody = await backend[data.key as keyof Backend](data.body);
         resStatus = 200;
       }
-    } catch (e) {
+    } catch (e: any) {
       if (e instanceof OperationalError) {
         resBody = e.toJSON();
       } else {
@@ -221,7 +220,6 @@ async function handleBackendRequest(page: Page, backend: Backend) {
 }
 
 (async () => {
-  await fixCrash().catch(console.warn);
   const page = await launch();
   await handleBackendRequest(page, new Backend());
   await page.goto(`file://${resolve(__dirname, '../client/index.html')}`);
