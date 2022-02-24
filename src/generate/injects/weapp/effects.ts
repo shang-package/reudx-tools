@@ -13,11 +13,15 @@ export default ({
     replace: (_: string, $1: string, $2: string) => {
       return `${$1}
 ${comment}
-*${effectName}({ payload }, { call, put }) {
-  yield put({
-    type: "${camelCase(`set ${stateName}`)}", 
-    payload: ${JSON.stringify(initValue)}, 
-  });
+*${effectName}({ payload, clean }, { call, put }) {
+
+  if(clean !== false) {
+    yield put({
+      type: "${camelCase(`set ${stateName}`)}", 
+      payload: ${JSON.stringify(initValue)}, 
+    });
+  }
+
 
   const res = yield call(${serverName}, payload);
   if (res.code !== "1") {
